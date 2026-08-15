@@ -4,6 +4,7 @@ import { config } from './config/env';
 import authRoutes from './routes/authRoutes';
 import adminAuthRoutes from './routes/adminAuthRoutes';
 import userRoutes from './routes/userRoutes';
+import restaurantRoutes from './routes/restaurantRoutes';
 
 const app: Application = express();
 
@@ -28,5 +29,6 @@ app.get('/api/health', (_req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/restaurant', restaurantRoutes);
 
 export default app;
