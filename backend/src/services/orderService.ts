@@ -179,4 +179,46 @@ export class OrderService {
 
     return order;
   }
+
+  static async getUserOrders(userId: string): Promise<IOrder[]> {
+    return await Order.find({ userId: new mongoose.Types.ObjectId(userId) }).sort({ createdAt: -1 });
+  }
+
+  static async getUserOrderById(userId: string, id: string): Promise<IOrder> {
+    const isObjectId = mongoose.Types.ObjectId.isValid(id);
+    const query: any = { userId: new mongoose.Types.ObjectId(userId) };
+
+    if (isObjectId) {
+      query._id = id;
+    } else {
+      query.orderId = id;
+    }
+
+    const order = await Order.findOne(query);
+
+    if (!order) {
+      throw {
+        statusCode: 404,
+        message: 'Order not found or does not belong to user',
+        code: 'ORDER_NOT_FOUND'
+      };
+    }
+
+    return order;
+  }
+
+  static async getUserOrderStatus(userId: string, id: string) {
+    const order = await this.getUserOrderById(userId, id);
+
+    return {
+      orderId: order.orderId,
+      orderStatus: order.orderStatus,
+      paymentStatus: order.paymentStatus,
+      paymentMethod: order.paymentMethod,
+      estimatedDeliveryTime: order.estimatedDeliveryTime,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt
+    };
+  }
 }
+
