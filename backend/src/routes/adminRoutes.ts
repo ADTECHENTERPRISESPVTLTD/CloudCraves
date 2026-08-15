@@ -20,11 +20,25 @@ import {
   cancelAdminOrder
 } from '../controllers/adminOrderController';
 import { getAdminReviews } from '../controllers/reviewController';
+import {
+  getDashboard,
+  getAnalytics,
+  getCustomers,
+  getCustomerById
+} from '../controllers/adminController';
 
 const router = Router();
 
 // Protect all routes under /api/admin with admin auth middleware
 router.use(authenticateAdmin);
+
+// Dashboard & Analytics Routes
+router.get('/dashboard', getDashboard);
+router.get('/analytics', getAnalytics);
+
+// Customer Management Routes
+router.get('/customers', getCustomers);
+router.get('/customers/:id', getCustomerById);
 
 // Admin Category Routes
 router.get('/categories', getAdminCategories);
