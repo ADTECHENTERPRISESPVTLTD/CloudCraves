@@ -14,17 +14,29 @@ import { notFoundHandler, errorHandler } from './middleware/errorMiddleware';
 
 const app: Application = express();
 
-// Security & CORS Middleware
+// Parse allowed frontend origins from CLIENT_URL (supports single URL or comma-separated URLs)
+const allowedOrigins = config.clientUrl.split(',').map((url) => url.trim());
+// Add default local development origin fallbacks
+if (!allowedOrigins.includes('http://localhost:5173')) allowedOrigins.push('http://localhost:5173');
+if (!allowedOrigins.includes('http://localhost:3000')) allowedOrigins.push('http://localhost:3000');
+
+// Production-Grade CORS Configuration
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, Postman) or matching CLIENT_URL
-      if (!origin || origin === config.clientUrl || config.clientUrl.split(',').includes(origin)) {
+      // Allow requests with no origin (e.g., mobile apps, Postman, server-to-server) or matching allowed origins
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(null, true); // Allow dev fallback while preserving origin validation structure
+        if (config.nodeEnv === 'production') {
+          callback(new Error(`Origin '${origin}' blocked by production CORS policy`));
+        } else {
+          callback(null, true); // Dev fallback
+        }
       }
     },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true
   })
 );
@@ -32,12 +44,16 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Health Check Endpoint
+// Health Check Endpoint (Render deployment & monitoring ready)
 app.get('/api/health', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
-    message: 'CloudCraves Backend REST API is operational',
-    timestamp: new Date().toISOString()
+    message: 'Server is healthy',
+    data: {
+      environment: config.nodeEnv,
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString()
+    }
   });
 });
 
