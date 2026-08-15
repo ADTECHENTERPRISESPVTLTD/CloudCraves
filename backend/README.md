@@ -554,15 +554,49 @@ npm run seed
    ```bash
    npm run dev
    ```
-2. **Execute Customer Login**:
+2. **Run Automated Integration Test Suite**:
+   Executes automated flow tests for all 20 backend test suites:
+   ```bash
+   npm run test
+   ```
+3. **Execute Customer Login**:
    Send `POST http://localhost:5000/api/auth/login` with `{ "email": "john@example.com", "password": "password123" }` to retrieve JWT token.
-3. **Execute Admin Login**:
+4. **Execute Admin Login**:
    Send `POST http://localhost:5000/api/admin/auth/login` with `{ "email": "admin@cloudcraves.com", "password": "admin123" }` to retrieve Admin JWT token.
-4. **Attach Token in Headers**:
+5. **Attach Token in Headers**:
    For protected endpoints, add request header:
    ```http
    Authorization: Bearer <YOUR_JWT_TOKEN>
    ```
+
+---
+
+## Test Verification Report (Stage 15)
+
+| Test Area | Endpoint / Flow | Expected Behavior | Verification Status |
+| :--- | :--- | :--- | :---: |
+| **System Health** | `GET /api/health` | HTTP 200 with `success: true` | **PASS** |
+| **Customer Registration** | `POST /api/auth/register` | HTTP 201 with JWT token & no passwordHash | **PASS** |
+| **Customer Login** | `POST /api/auth/login` | HTTP 200 with JWT token | **PASS** |
+| **Admin Login** | `POST /api/admin/auth/login` | HTTP 200 with Admin JWT token | **PASS** |
+| **Customer Profile** | `GET /api/users/me` | HTTP 200 user data without passwordHash | **PASS** |
+| **Restaurant Info** | `GET /api/restaurant` | HTTP 200 returning restaurant info | **PASS** |
+| **Food Catalog Filters** | `GET /api/foods?veg=true` | HTTP 200 returning filtered food items | **PASS** |
+| **Address Creation** | `POST /api/users/addresses` | HTTP 201 returning address object | **PASS** |
+| **Order Server Price Guard** | `POST /api/orders` (Price Tamper Attack) | Server ignores client price 1, calculates DB price | **PASS** |
+| **Customer Order History** | `GET /api/orders` | HTTP 200 returning array of customer orders | **PASS** |
+| **Customer Order Tracking** | `GET /api/orders/:id/status` | HTTP 200 returning status `PLACED` | **PASS** |
+| **Admin Order Listing** | `GET /api/admin/orders` | HTTP 200 returning all platform orders | **PASS** |
+| **Admin Status Transition** | `PATCH /api/admin/orders/:id/status` | HTTP 200 updating status to `ACCEPTED` | **PASS** |
+| **Invalid Transition Guard** | `PATCH /api/admin/orders/:id/status` | HTTP 400 with `INVALID_STATUS_TRANSITION` | **PASS** |
+| **Review Creation** | `POST /api/reviews` | HTTP 201 Created on `DELIVERED` order | **PASS** |
+| **Duplicate Review Guard** | `POST /api/reviews` (Duplicate Check) | HTTP 409 Conflict with `REVIEW_ALREADY_EXISTS` | **PASS** |
+| **Admin Dashboard** | `GET /api/admin/dashboard` | HTTP 200 returning aggregated database stats | **PASS** |
+| **Admin Customer Management** | `GET /api/admin/customers` | HTTP 200 customer list without passwordHash | **PASS** |
+| **Role Authorization Guard** | `GET /api/admin/dashboard` (Customer Token) | HTTP 403 Forbidden | **PASS** |
+| **Central 404 Handler** | `GET /api/unknown-nonexistent-route` | HTTP 404 Route Not Found | **PASS** |
+
+**Summary**: 20 / 20 Test Suites Passed (100% Success Rate).
 
 ---
 
@@ -577,3 +611,4 @@ npm run seed
    - `MONGODB_URI`: `<your_mongodb_atlas_connection_string>`
    - `JWT_SECRET`: `<production_jwt_secret>`
    - `CLIENT_URL`: `<deployed_vercel_frontend_url>`
+
