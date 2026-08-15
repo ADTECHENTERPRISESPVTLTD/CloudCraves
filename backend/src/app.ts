@@ -8,6 +8,7 @@ import addressRoutes from './routes/addressRoutes';
 import restaurantRoutes from './routes/restaurantRoutes';
 import foodRoutes from './routes/foodRoutes';
 import orderRoutes from './routes/orderRoutes';
+import reviewRoutes from './routes/reviewRoutes';
 import adminRoutes from './routes/adminRoutes';
 
 const app: Application = express();
@@ -37,6 +38,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/restaurant', restaurantRoutes);
 app.use('/api/foods', foodRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/reviews', reviewRoutes);
 app.use('/api/admin', adminRoutes);
 
 export default app;

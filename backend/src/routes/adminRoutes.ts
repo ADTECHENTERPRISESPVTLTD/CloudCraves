@@ -19,6 +19,7 @@ import {
   updateAdminOrderStatus,
   cancelAdminOrder
 } from '../controllers/adminOrderController';
+import { getAdminReviews } from '../controllers/reviewController';
 
 const router = Router();
 
@@ -43,5 +44,8 @@ router.get('/orders', getAdminOrders);
 router.get('/orders/:id', getAdminOrderDetails);
 router.patch('/orders/:id/status', updateAdminOrderStatus);
 router.patch('/orders/:id/cancel', cancelAdminOrder);
+
+// Admin Review Management Route
+router.get('/reviews', getAdminReviews);
 
 export default router;
