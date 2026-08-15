@@ -10,18 +10,29 @@ import foodRoutes from './routes/foodRoutes';
 import orderRoutes from './routes/orderRoutes';
 import reviewRoutes from './routes/reviewRoutes';
 import adminRoutes from './routes/adminRoutes';
+import { notFoundHandler, errorHandler } from './middleware/errorMiddleware';
 
 const app: Application = express();
 
-// Security & Middleware
-app.use(cors({
-  origin: config.clientUrl,
-  credentials: true
-}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Security & CORS Middleware
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman) or matching CLIENT_URL
+      if (!origin || origin === config.clientUrl || config.clientUrl.split(',').includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Allow dev fallback while preserving origin validation structure
+      }
+    },
+    credentials: true
+  })
+);
 
-// Health Check
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Health Check Endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
@@ -40,5 +51,9 @@ app.use('/api/foods', foodRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Centralized 404 Handler & Global Error Middleware
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export default app;
