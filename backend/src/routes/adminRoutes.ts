@@ -13,10 +13,16 @@ import {
   updateFood,
   deleteFood
 } from '../controllers/foodController';
+import {
+  getAdminOrders,
+  getAdminOrderDetails,
+  updateAdminOrderStatus,
+  cancelAdminOrder
+} from '../controllers/adminOrderController';
 
 const router = Router();
 
-// Protect all routes under /api/admin
+// Protect all routes under /api/admin with admin auth middleware
 router.use(authenticateAdmin);
 
 // Admin Category Routes
@@ -31,5 +37,11 @@ router.post('/foods', createFood);
 router.get('/foods/:id', getFoodById);
 router.put('/foods/:id', updateFood);
 router.delete('/foods/:id', deleteFood);
+
+// Admin Order Management Routes
+router.get('/orders', getAdminOrders);
+router.get('/orders/:id', getAdminOrderDetails);
+router.patch('/orders/:id/status', updateAdminOrderStatus);
+router.patch('/orders/:id/cancel', cancelAdminOrder);
 
 export default router;

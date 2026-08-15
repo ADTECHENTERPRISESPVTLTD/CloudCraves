@@ -220,5 +220,87 @@ export class OrderService {
       updatedAt: order.updatedAt
     };
   }
+
+  static async getAllAdminOrders(): Promise<IOrder[]> {
+    return await Order.find()
+      .populate('userId', 'name email phone')
+      .sort({ createdAt: -1 });
+  }
+
+  static async getAdminOrderById(id: string): Promise<IOrder> {
+    const isObjectId = mongoose.Types.ObjectId.isValid(id);
+    const query = isObjectId ? { _id: id } : { orderId: id };
+
+    const order = await Order.findOne(query).populate('userId', 'name email phone');
+    if (!order) {
+      throw {
+        statusCode: 404,
+        message: 'Order not found',
+        code: 'ORDER_NOT_FOUND'
+      };
+    }
+    return order;
+  }
+
+  static async updateOrderStatus(id: string, newStatus: string): Promise<IOrder> {
+    const allowedStatuses = [
+      'PLACED',
+      'ACCEPTED',
+      'PREPARING',
+      'READY',
+      'OUT_FOR_DELIVERY',
+      'DELIVERED',
+      'CANCELLED'
+    ];
+
+    if (!allowedStatuses.includes(newStatus)) {
+      throw {
+        statusCode: 400,
+        message: `Invalid order status '${newStatus}'. Allowed statuses are: ${allowedStatuses.join(', ')}`,
+        code: 'INVALID_STATUS'
+      };
+    }
+
+    const order = await this.getAdminOrderById(id);
+    const currentStatus = order.orderStatus;
+
+    if (currentStatus === 'DELIVERED' || currentStatus === 'CANCELLED') {
+      throw {
+        statusCode: 400,
+        message: `Cannot change status of an order that is already ${currentStatus}`,
+        code: 'TERMINAL_ORDER_STATUS'
+      };
+    }
+
+    const validTransitions: Record<string, string[]> = {
+      PLACED: ['ACCEPTED', 'CANCELLED'],
+      ACCEPTED: ['PREPARING', 'CANCELLED'],
+      PREPARING: ['READY', 'CANCELLED'],
+      READY: ['OUT_FOR_DELIVERY', 'CANCELLED'],
+      OUT_FOR_DELIVERY: ['DELIVERED', 'CANCELLED']
+    };
+
+    const allowedNext = validTransitions[currentStatus] || [];
+    if (!allowedNext.includes(newStatus)) {
+      throw {
+        statusCode: 400,
+        message: `Invalid order status transition from '${currentStatus}' to '${newStatus}'`,
+        code: 'INVALID_STATUS_TRANSITION'
+      };
+    }
+
+    order.orderStatus = newStatus as any;
+    if (newStatus === 'DELIVERED' && order.paymentStatus === 'COD') {
+      order.paymentStatus = 'PAID';
+    }
+
+    await order.save();
+    return order;
+  }
+
+  static async cancelOrderAdmin(id: string): Promise<IOrder> {
+    return await this.updateOrderStatus(id, 'CANCELLED');
+  }
 }
+
 
