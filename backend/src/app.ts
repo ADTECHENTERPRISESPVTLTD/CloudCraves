@@ -4,6 +4,7 @@ import { config } from './config/env';
 import authRoutes from './routes/authRoutes';
 import adminAuthRoutes from './routes/adminAuthRoutes';
 import userRoutes from './routes/userRoutes';
+import addressRoutes from './routes/addressRoutes';
 import restaurantRoutes from './routes/restaurantRoutes';
 import foodRoutes from './routes/foodRoutes';
 import adminRoutes from './routes/adminRoutes';
@@ -30,6 +31,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/users/addresses', addressRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/restaurant', restaurantRoutes);
 app.use('/api/foods', foodRoutes);
