@@ -1,62 +1,15 @@
-# Cloud Kitchen Ordering Platform — Frontend
+# Cloud Kitchen Ordering Platform
 
-Frontend-only implementation for AD TECH Enterprises Task-04.
+Monorepo workspace for AD TECH Enterprises Task-04 containing both the frontend and backend applications.
 
-## Scope
-- Customer portal: discover, restaurants, menu, cart, checkout, order tracking, orders, profile.
-- Admin portal: login, dashboard, orders, menu, restaurant profile, delivery, settings.
-- Mock data and service layer are separated from UI.
-- No backend is required for the prototype.
+## Directory Structure
 
-## Setup
-```bash
-npm install
-npm run dev
-```
+- [frontend](file:///e:/Desktop%20E-Drive/AD%20Tech/CloudCraves/frontend) - Customer and Admin portal Next.js frontend application.
+- [backend](file:///e:/Desktop%20E-Drive/AD%20Tech/CloudCraves/backend) - Node.js / Express / TypeScript backend API service.
 
-Open http://localhost:3000.
+## Getting Started
 
-## Production check
-```bash
-npm run build
-npm run start
-```
+Refer to the individual README files within each project directory for specific setup and configuration instructions:
 
-## Mock credentials
-Customer:
-- Email: customer@example.com
-- Password: customer123
-
-Admin:
-- Email: admin@cloudkitchen.local
-- Password: admin123
-
-## Routes
-Customer:
-- /
-- /restaurants
-- /restaurant/[id]
-- /cart
-- /checkout
-- /orders
-- /orders/[id]
-- /profile
-
-Auth:
-- /login
-- /register
-- /admin/login
-
-Admin:
-- /admin
-- /admin/orders
-- /admin/menu
-- /admin/restaurant
-- /admin/delivery
-- /admin/settings
-
-## Environment
-Copy `.env.example` to `.env.local` when a backend is available:
-`NEXT_PUBLIC_API_BASE_URL=...`
-
-The service files are the intended replacement point for real API calls.
+- [Frontend Setup & Documentation](file:///e:/Desktop%20E-Drive/AD%20Tech/CloudCraves/frontend/README.md)
+- [Backend Setup & Documentation](file:///e:/Desktop%20E-Drive/AD%20Tech/CloudCraves/backend/README.md)
