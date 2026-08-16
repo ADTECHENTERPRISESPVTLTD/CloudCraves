@@ -1,0 +1,7 @@
+"use client";
+import { useState } from "react";
+import AdminShell from "@/components/admin/AdminShell";
+import { deliveryService } from "@/lib/services/delivery.service";
+import type { DeliveryRequest } from "@/types/delivery";
+import { useEffect } from "react";
+export default function AdminDelivery(){const [items,setItems]=useState<DeliveryRequest[]>([]);useEffect(()=>{deliveryService.list().then(setItems)},[]);return <AdminShell><h2 className="text-3xl font-black text-[#6b4f3a]">Delivery management</h2><p className="mt-1 text-[#6d625a]">Simple local rider coordination — no fake GPS.</p><div className="mt-6 space-y-4">{items.map(x=><div key={x.id} className="card-kitchen p-5"><div className="flex flex-col justify-between gap-4 sm:flex-row"><div><b>{x.orderNumber}</b><p className="mt-1">{x.customerName}</p><p className="mt-1 text-sm text-[#6d625a]">{x.address}</p><a href={`tel:${x.phone}`} className="mt-3 inline-block font-bold text-[#e4572e]">Call customer</a></div><div className="flex items-center gap-2"><span className="badge-open rounded-full px-3 py-1 text-xs font-bold">{x.status}</span>{x.status!=="completed"&&<button className="btn-secondary" onClick={async()=>{const next=x.status==="pending"?"assigned":"completed";const updated=await deliveryService.updateStatus(x.id,next);if(updated)setItems(items.map(i=>i.id===x.id?updated:i))}}>{x.status==="pending"?"Assign rider":"Mark completed"}</button>}</div></div></div>)}</div></AdminShell>}
