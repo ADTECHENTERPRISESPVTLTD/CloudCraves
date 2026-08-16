@@ -1,4 +1,4 @@
-# Cloud Kitchen Ordering Platform
+# Cloud Craves
 
 Monorepo workspace for AD TECH Enterprises Task-04 containing both the frontend and backend applications.
 
