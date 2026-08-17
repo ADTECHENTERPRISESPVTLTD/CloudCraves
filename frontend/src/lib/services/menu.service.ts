@@ -66,6 +66,10 @@ export const menuService = {
         }))
       );
 
+      if (items.length === 0) {
+        throw new Error("No menu items found in database, using mock menus.");
+      }
+
       return {
         categories,
         items,
