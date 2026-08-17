@@ -62,38 +62,41 @@ export default function ReviewsPage() {
           )}
 
         <div className="mt-6 space-y-4">
-          {reviews.map((review) => (
-            <div
-              key={review._id}
-              className="card-kitchen p-5"
-            >
-              <div className="flex flex-col justify-between gap-2 sm:flex-row">
-                <div>
-                  <h2 className="font-black">
-                    {review.foodId?.name ||
-                      "Food item"}
-                  </h2>
+          {reviews.map((review) => {
+            const foodObj = review.foodId && typeof review.foodId === "object" ? (review.foodId as any) : null;
+            const orderObj = review.orderId && typeof review.orderId === "object" ? (review.orderId as any) : null;
 
-                  <p className="mt-1 text-sm text-[#6d625a]">
-                    Order:{" "}
-                    {review.orderId?.orderId ||
-                      "-"}
-                  </p>
+            return (
+              <div
+                key={review._id}
+                className="card-kitchen p-5"
+              >
+                <div className="flex flex-col justify-between gap-2 sm:flex-row">
+                  <div>
+                    <h2 className="font-black">
+                      {foodObj?.name || "Food item"}
+                    </h2>
+
+                    <p className="mt-1 text-sm text-[#6d625a]">
+                      Order:{" "}
+                      {orderObj?.orderId || "-"}
+                    </p>
+                  </div>
+
+                  <div className="text-sm font-bold">
+                    Food: ⭐ {review.foodRating}
+                    <br />
+                    Service: ⭐{" "}
+                    {review.serviceRating}
+                  </div>
                 </div>
 
-                <div className="text-sm font-bold">
-                  Food: ⭐ {review.foodRating}
-                  <br />
-                  Service: ⭐{" "}
-                  {review.serviceRating}
-                </div>
+                <p className="mt-4 text-sm">
+                  {review.comment}
+                </p>
               </div>
-
-              <p className="mt-4 text-sm">
-                {review.comment}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </CustomerShell>

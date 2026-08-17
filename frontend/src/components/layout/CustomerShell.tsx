@@ -20,6 +20,30 @@ export default function CustomerShell({
   children,
 }: CustomerShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [location, setLocation] = useState("Hinjewadi, Pune");
+
+  useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("cloudcraves_location");
+      if (stored) {
+        setLocation(stored);
+      }
+    }
+  });
+
+  const changeLocation = () => {
+    const val = window.prompt("Enter your delivery location:", location);
+    if (val && val.trim()) {
+      const trimmed = val.trim();
+      setLocation(trimmed);
+      localStorage.setItem("cloudcraves_location", trimmed);
+      window.dispatchEvent(
+        new CustomEvent("cloudcraves_location_changed", {
+          detail: trimmed,
+        })
+      );
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#fff8ee] text-[#2e2a27]">
@@ -37,7 +61,10 @@ export default function CustomerShell({
           </Link>
 
           {/* Location */}
-          <button className="hidden items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-[#fff5ee] md:flex">
+          <button
+            onClick={changeLocation}
+            className="hidden items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-[#fff5ee] md:flex"
+          >
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#fff1e8] text-[#e4572e]">
               <MapPin size={18} />
             </span>
@@ -47,7 +74,7 @@ export default function CustomerShell({
                 Deliver to
               </span>
               <span className="block text-sm font-extrabold text-[#6b4f3a]">
-                Hinjewadi, Pune
+                {location}
               </span>
             </span>
           </button>
@@ -153,7 +180,10 @@ export default function CustomerShell({
               </button>
             </div>
 
-            <div className="mb-7 rounded-2xl bg-[#fff8ee] p-4">
+            <div
+              onClick={changeLocation}
+              className="mb-7 rounded-2xl bg-[#fff8ee] p-4 cursor-pointer hover:bg-[#fff1e8]"
+            >
               <div className="flex items-center gap-3">
                 <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#fff1e8] text-[#e4572e]">
                   <MapPin size={18} />
@@ -164,7 +194,7 @@ export default function CustomerShell({
                     DELIVERY LOCATION
                   </p>
                   <p className="font-extrabold text-[#6b4f3a]">
-                    Hinjewadi, Pune
+                    {location}
                   </p>
                 </div>
               </div>

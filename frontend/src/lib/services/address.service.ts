@@ -4,13 +4,13 @@ import type { BackendAddress } from "@/types/api";
 export const addressService = {
   list() {
     return apiFetch<BackendAddress[]>(
-      "/api/users/addresses"
+      "/users/addresses"
     );
   },
 
   create(data: Omit<BackendAddress, "_id">) {
     return apiFetch<BackendAddress>(
-      "/api/users/addresses",
+      "/users/addresses",
       {
         method: "POST",
         body: JSON.stringify(data),
@@ -20,7 +20,7 @@ export const addressService = {
 
   update(id: string, data: Partial<BackendAddress>) {
     return apiFetch<BackendAddress>(
-      `/api/users/addresses/${id}`,
+      `/users/addresses/${id}`,
       {
         method: "PUT",
         body: JSON.stringify(data),
@@ -30,7 +30,7 @@ export const addressService = {
 
   remove(id: string) {
     return apiFetch<BackendAddress>(
-      `/api/users/addresses/${id}`,
+      `/users/addresses/${id}`,
       {
         method: "DELETE",
       }

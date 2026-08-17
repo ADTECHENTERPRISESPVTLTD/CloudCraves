@@ -1,50 +1,143 @@
 "use client";
 
 import { useState } from "react";
-import { reviewService } from "@/lib/services/review.service";
+import { Star } from "lucide-react";
+
+type ReviewData = {
+  foodRating: number;
+  serviceRating: number;
+  comment: string;
+};
+
+type Props = {
+  onSubmit: (
+    data: ReviewData
+  ) => Promise<void>;
+};
+
+type RatingSelectorProps = {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+};
+
+function RatingSelector({
+  label,
+  value,
+  onChange,
+}: RatingSelectorProps) {
+  return (
+    <div className="mt-5">
+      <p className="text-sm font-bold text-[#6b4f3a]">
+        {label}
+      </p>
+
+      <div className="mt-2 flex gap-1">
+        {[1, 2, 3, 4, 5].map(
+          (ratingValue) => (
+            <button
+              key={ratingValue}
+              type="button"
+              onClick={() =>
+                onChange(ratingValue)
+              }
+              aria-label={`Rate ${label} ${ratingValue} stars`}
+            >
+              <Star
+                size={30}
+                className={
+                  ratingValue <= value
+                    ? "fill-[#f4c95d] text-[#f4c95d]"
+                    : "text-[#d7d0c8]"
+                }
+              />
+            </button>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function ReviewForm({
-  orderId,
-  foodId,
-}: {
-  orderId: string;
-  foodId: string;
-}) {
-  const [foodRating, setFoodRating] = useState(5);
-  const [serviceRating, setServiceRating] = useState(5);
-  const [comment, setComment] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  onSubmit,
+}: Props) {
+  const [foodRating, setFoodRating] =
+    useState(0);
 
-  async function submit(event: React.FormEvent) {
+  const [
+    serviceRating,
+    setServiceRating,
+  ] = useState(0);
+
+  const [comment, setComment] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [success, setSuccess] =
+    useState("");
+
+  async function submit(
+    event: React.FormEvent
+  ) {
     event.preventDefault();
 
-    if (!comment.trim()) {
-      setError("Please write a comment.");
+    setError("");
+    setSuccess("");
+
+    if (
+      foodRating < 1 ||
+      foodRating > 5
+    ) {
+      setError(
+        "Please select a food rating."
+      );
       return;
     }
 
-    setLoading(true);
-    setError("");
-    setMessage("");
+    if (
+      serviceRating < 1 ||
+      serviceRating > 5
+    ) {
+      setError(
+        "Please select a service rating."
+      );
+      return;
+    }
+
+    if (comment.trim().length < 5) {
+      setError(
+        "Please write at least 5 characters."
+      );
+      return;
+    }
 
     try {
-      await reviewService.create({
-        orderId,
-        foodId,
+      setLoading(true);
+
+      await onSubmit({
         foodRating,
         serviceRating,
-        comment,
+        comment: comment.trim(),
       });
 
-      setMessage("Review submitted successfully.");
+      setSuccess(
+        "Thank you! Your review was submitted."
+      );
+
+      setFoodRating(0);
+      setServiceRating(0);
       setComment("");
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
-          : "Unable to submit review"
+          : "Unable to submit your review. Please try again."
       );
     } finally {
       setLoading(false);
@@ -54,70 +147,53 @@ export default function ReviewForm({
   return (
     <form
       onSubmit={submit}
-      className="mt-4 rounded-2xl bg-[#f3f1ec] p-4"
+      className="card-kitchen p-5"
     >
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm font-bold">
-          Food rating
+      <h3 className="text-xl font-black">
+        Rate your experience
+      </h3>
 
-          <select
-            className="input-kitchen mt-1"
-            value={foodRating}
-            onChange={(e) =>
-              setFoodRating(Number(e.target.value))
-            }
-          >
-            {[5, 4, 3, 2, 1].map((rating) => (
-              <option key={rating} value={rating}>
-                {rating}/5
-              </option>
-            ))}
-          </select>
-        </label>
+      <RatingSelector
+        label="Food rating"
+        value={foodRating}
+        onChange={setFoodRating}
+      />
 
-        <label className="text-sm font-bold">
-          Service rating
-
-          <select
-            className="input-kitchen mt-1"
-            value={serviceRating}
-            onChange={(e) =>
-              setServiceRating(Number(e.target.value))
-            }
-          >
-            {[5, 4, 3, 2, 1].map((rating) => (
-              <option key={rating} value={rating}>
-                {rating}/5
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <RatingSelector
+        label="Service rating"
+        value={serviceRating}
+        onChange={setServiceRating}
+      />
 
       <textarea
-        className="input-kitchen mt-3 min-h-24"
-        placeholder="Tell us about your experience"
+        className="input-kitchen mt-5 min-h-28"
+        placeholder="Tell us about your food and experience..."
         value={comment}
-        onChange={(e) => setComment(e.target.value)}
+        onChange={(event) =>
+          setComment(event.target.value)
+        }
       />
 
       {error && (
-        <p className="mt-2 text-sm text-red-600">
+        <p className="mt-3 rounded-xl bg-[#f8e6e1] p-3 text-sm font-semibold text-[#b33b21]">
           {error}
         </p>
       )}
 
-      {message && (
-        <p className="mt-2 text-sm font-bold text-[#5c8d47]">
-          {message}
+      {success && (
+        <p className="mt-3 rounded-xl bg-[#e8f3e3] p-3 text-sm font-semibold text-[#5c8d47]">
+          {success}
         </p>
       )}
 
       <button
+        type="submit"
         disabled={loading}
-        className="btn-primary mt-3"
+        className="btn-primary mt-4 disabled:opacity-60"
       >
-        {loading ? "Submitting…" : "Submit review"}
+        {loading
+          ? "Submitting..."
+          : "Submit review"}
       </button>
     </form>
   );

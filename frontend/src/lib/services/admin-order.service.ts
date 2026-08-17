@@ -4,17 +4,13 @@ import type { BackendOrder } from "@/types/api";
 export const adminOrderService = {
   list() {
     return apiFetch<BackendOrder[]>(
-      "/api/admin/orders",
-      {},
-      "admin"
+      "/admin/orders"
     );
   },
 
   getById(id: string) {
     return apiFetch<BackendOrder>(
-      `/api/admin/orders/${id}`,
-      {},
-      "admin"
+      `/admin/orders/${id}`
     );
   },
 
@@ -23,24 +19,22 @@ export const adminOrderService = {
     orderStatus: BackendOrder["orderStatus"]
   ) {
     return apiFetch<BackendOrder>(
-      `/api/admin/orders/${id}/status`,
+      `/admin/orders/${id}/status`,
       {
         method: "PATCH",
         body: JSON.stringify({
           status: orderStatus,
         }),
-      },
-      "admin"
+      }
     );
   },
 
   cancel(id: string) {
     return apiFetch<BackendOrder>(
-      `/api/admin/orders/${id}/cancel`,
+      `/admin/orders/${id}/cancel`,
       {
         method: "PATCH",
-      },
-      "admin"
+      }
     );
   },
 };

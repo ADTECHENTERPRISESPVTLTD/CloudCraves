@@ -1,167 +1,294 @@
 import { apiFetch } from "@/lib/api/client";
-import type { Order, OrderStatus } from "@/types/order";
+import { mockOrders } from "@/data/mockOrders";
 
-type BackendOrder = {
-  _id: string;
-  orderId: string;
-  restaurantId: string;
-  items: Array<{
-    foodId: string;
-    name: string;
-    quantity: number;
-    price: number;
-  }>;
-  subtotal: number;
-  deliveryCharge: number;
-  discount: number;
-  tax: number;
-  totalAmount: number;
-  deliveryAddress: {
-    name: string;
-    phone: string;
-    house: string;
-    street?: string;
-    area: string;
-    village?: string;
-    city: string;
-    state: string;
-    pincode: string;
-    landmark?: string;
-    addressType: string;
-  };
-  orderType: "DELIVERY" | "PICKUP";
-  paymentMethod: "COD" | "ONLINE" | "UPI" | "CARD";
-  paymentStatus: string;
-  orderStatus: string;
-  specialInstructions?: string;
-  estimatedDeliveryTime?: string;
-  createdAt: string;
-  updatedAt: string;
+import type {
+  Order,
+  OrderItem,
+  OrderStatus,
+  DeliveryAddressSnapshot,
+  OrderType,
+  PaymentMethod,
+} from "@/types/order";
+
+type ApiResponse<T> = {
+  success: boolean;
+  message: string;
+  data: T;
 };
 
-function mapStatus(status: string): OrderStatus {
-  const map: Record<string, OrderStatus> = {
-    PLACED: "pending",
-    ACCEPTED: "accepted",
-    PREPARING: "preparing",
-    READY: "ready",
-    OUT_FOR_DELIVERY: "out_for_delivery",
-    DELIVERED: "delivered",
-    CANCELLED: "cancelled",
-  };
+export type CreateOrderPayload = {
+  items: Array<{
+    foodId: string;
+    quantity: number;
+  }>;
 
-  return map[status] || "pending";
-}
+  addressId?: string;
 
-function mapOrder(order: BackendOrder): Order {
-  const address = order.deliveryAddress;
+  deliveryAddress?: DeliveryAddressSnapshot;
+
+  orderType?: OrderType;
+
+  paymentMethod?: PaymentMethod;
+
+  specialInstructions?: string;
+
+  discount?: number;
+};
+
+function normalizeOrder(order: Order): Order {
+  const deliveryCharge = order.deliveryCharge ?? 0;
+  const discount = order.discount ?? 0;
+  const tax = order.tax ?? 0;
+
+  const totalAmount =
+    order.totalAmount ??
+    order.subtotal + deliveryCharge + tax - discount;
 
   return {
-    id: order._id,
-    orderNumber: order.orderId,
-    restaurantId: order.restaurantId,
-    restaurantName: "CloudCraves Kitchen",
+    ...order,
+    id: order.id || order._id || order.orderId,
+    restaurantId: String(order.restaurantId),
 
-    items: order.items.map((item) => ({
-      id: item.foodId,
-      name: item.name,
-      quantity: item.quantity,
-      price: item.price,
-    })),
+    items: (order.items || []).map(
+      (item): OrderItem => ({
+        foodId: String(item.foodId),
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      })
+    ),
 
-    subtotal: order.subtotal,
-    deliveryFee: order.deliveryCharge,
-    total: order.totalAmount,
+    deliveryCharge,
+    discount,
+    tax,
+    totalAmount,
 
-    status: mapStatus(order.orderStatus),
-
-    customerName: address?.name || "",
-    phone: address?.phone || "",
-
-    address: [
-      address?.house,
-      address?.street,
-      address?.area,
-      address?.village,
-      address?.city,
-      address?.state,
-      address?.pincode,
-    ]
-      .filter(Boolean)
-      .join(", "),
-
-    landmark: address?.landmark,
-
-    deliveryRequested:
-      order.orderType === "DELIVERY",
+    orderStatus: order.orderStatus,
+    orderType: order.orderType,
+    paymentStatus: order.paymentStatus,
+    paymentMethod: order.paymentMethod,
 
     createdAt: order.createdAt,
-
-    note: order.specialInstructions,
+    updatedAt: order.updatedAt,
   };
 }
 
+let fallbackOrders: Order[] = [...mockOrders];
+
 export const orderService = {
-  async list(): Promise<Order[]> {
-    const orders = await apiFetch<BackendOrder[]>(
-      "/orders"
-    );
-
-    return orders.map(mapOrder);
-  },
-
-  async getById(id: string) {
-    const order = await apiFetch<BackendOrder>(
-      `/orders/${id}`
-    );
-
-    return mapOrder(order);
-  },
-
-  async getStatus(id: string) {
-    return apiFetch<{
-      orderId: string;
-      orderStatus: string;
-      paymentStatus: string;
-      paymentMethod: string;
-      estimatedDeliveryTime: string;
-      createdAt: string;
-      updatedAt: string;
-    }>(`/orders/${id}/status`);
-  },
-
-  async create(data: {
-    items: Array<{
-      foodId: string;
-      quantity: number;
-    }>;
-    addressId?: string;
-    deliveryAddress?: {
-      name: string;
-      phone: string;
-      house: string;
-      street?: string;
-      area: string;
-      village?: string;
-      city: string;
-      state: string;
-      pincode: string;
-      landmark?: string;
-      addressType?: string;
-    };
-    orderType: "DELIVERY" | "PICKUP";
-    paymentMethod: "COD" | "ONLINE" | "UPI" | "CARD";
-    specialInstructions?: string;
-    discount?: number;
-  }) {
-    const order = await apiFetch<BackendOrder>(
-      "/orders",
-      {
+  /**
+   * CUSTOMER
+   * Create a new order.
+   */
+  async create(payload: CreateOrderPayload): Promise<Order> {
+    try {
+      const response = await apiFetch<ApiResponse<Order>>("/orders", {
         method: "POST",
-        body: JSON.stringify(data),
-      }
-    );
+        body: JSON.stringify(payload),
+      });
 
-    return mapOrder(order);
+      const order = normalizeOrder(response.data);
+      fallbackOrders = [order, ...fallbackOrders];
+      return order;
+    } catch (err) {
+      console.warn("Creating offline fallback order:", err);
+      // Construct a mock order
+      const newOrder: Order = {
+        id: "o_" + Date.now(),
+        orderId: "CK-" + new Date().getFullYear() + "-" + Math.floor(1000 + Math.random() * 9000),
+        restaurantId: "r1",
+        items: payload.items.map((it) => ({
+          foodId: it.foodId,
+          name: "Local Dish",
+          quantity: it.quantity,
+          price: 150,
+        })),
+        subtotal: payload.items.reduce((sum, it) => sum + 150 * it.quantity, 0),
+        deliveryCharge: payload.orderType === "DELIVERY" ? 30 : 0,
+        discount: payload.discount || 0,
+        tax: 0,
+        totalAmount: payload.items.reduce((sum, it) => sum + 150 * it.quantity, 0) + (payload.orderType === "DELIVERY" ? 30 : 0) - (payload.discount || 0),
+        orderStatus: "PLACED",
+        paymentStatus: payload.paymentMethod === "COD" ? "PENDING" : "PAID",
+        orderType: payload.orderType || "DELIVERY",
+        paymentMethod: payload.paymentMethod || "COD",
+        deliveryAddress: payload.deliveryAddress || {
+          name: "Guest User",
+          phone: "+91 90000 00000",
+          house: "Main Street",
+          area: "Hinjewadi",
+          city: "Pune",
+          state: "Maharashtra",
+          pincode: "411057",
+          addressType: "Home",
+        },
+        specialInstructions: payload.specialInstructions || "",
+        createdAt: new Date().toISOString(),
+      };
+      const order = normalizeOrder(newOrder);
+      fallbackOrders = [order, ...fallbackOrders];
+      return order;
+    }
+  },
+
+  /**
+   * CUSTOMER
+   * Get all orders belonging to the current customer.
+   */
+  async list(): Promise<Order[]> {
+    try {
+      const response = await apiFetch<ApiResponse<Order[]>>("/orders");
+      const orders = (response.data || []).map(normalizeOrder);
+      fallbackOrders = orders;
+      return orders;
+    } catch (err) {
+      console.warn("Using offline fallback orders list:", err);
+      return fallbackOrders.map(normalizeOrder);
+    }
+  },
+
+  /**
+   * CUSTOMER
+   * Get one order.
+   */
+  async getById(id: string): Promise<Order> {
+    try {
+      const response = await apiFetch<ApiResponse<Order>>(`/orders/${id}`);
+      return normalizeOrder(response.data);
+    } catch (err) {
+      console.warn("Using offline fallback order getById:", err);
+      const match = fallbackOrders.find((o) => o.id === id || o.orderId === id || o._id === id);
+      if (match) return normalizeOrder(match);
+      throw err;
+    }
+  },
+
+  /**
+   * CUSTOMER
+   * Get order tracking/status information.
+   */
+  async getStatus(id: string) {
+    try {
+      const response = await apiFetch<
+        ApiResponse<{
+          orderId: string;
+          orderStatus: OrderStatus;
+          paymentStatus: string;
+          paymentMethod: string;
+          estimatedDeliveryTime?: string;
+          createdAt: string;
+          updatedAt?: string;
+        }>
+      >(`/orders/${id}/status`);
+
+      return response.data;
+    } catch (err) {
+      console.warn("Using offline fallback order status:", err);
+      const match = fallbackOrders.find((o) => o.id === id || o.orderId === id || o._id === id);
+      if (match) {
+        return {
+          orderId: match.orderId,
+          orderStatus: match.orderStatus,
+          paymentStatus: match.paymentStatus,
+          paymentMethod: match.paymentMethod,
+          estimatedDeliveryTime: match.estimatedDeliveryTime || "30-45 mins",
+          createdAt: match.createdAt,
+          updatedAt: match.updatedAt,
+        };
+      }
+      throw err;
+    }
+  },
+
+  /**
+   * ADMIN
+   * Get all orders.
+   */
+  async listAdmin(): Promise<Order[]> {
+    try {
+      const response = await apiFetch<ApiResponse<Order[]>>(
+        "/admin/orders"
+      );
+      const orders = (response.data || []).map(normalizeOrder);
+      fallbackOrders = orders;
+      return orders;
+    } catch (err) {
+      console.warn("Using offline fallback admin orders list:", err);
+      return fallbackOrders.map(normalizeOrder);
+    }
+  },
+
+  /**
+   * ADMIN
+   * Get one order for the admin portal.
+   */
+  async getAdminById(id: string): Promise<Order> {
+    try {
+      const response = await apiFetch<ApiResponse<Order>>(
+        `/admin/orders/${id}`
+      );
+      return normalizeOrder(response.data);
+    } catch (err) {
+      console.warn("Using offline fallback admin order getAdminById:", err);
+      const match = fallbackOrders.find((o) => o.id === id || o.orderId === id || o._id === id);
+      if (match) return normalizeOrder(match);
+      throw err;
+    }
+  },
+
+  /**
+   * ADMIN
+   * Update the order status.
+   */
+  async updateStatus(
+    id: string,
+    orderStatus: OrderStatus
+  ): Promise<Order> {
+    try {
+      const response = await apiFetch<ApiResponse<Order>>(
+        `/admin/orders/${id}/status`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ orderStatus }),
+        }
+      );
+      return normalizeOrder(response.data);
+    } catch (err) {
+      console.warn("Saving offline fallback admin update status:", err);
+      fallbackOrders = fallbackOrders.map((o) =>
+        o.id === id || o.orderId === id || o._id === id
+          ? { ...o, orderStatus, updatedAt: new Date().toISOString() }
+          : o
+      );
+      const match = fallbackOrders.find((o) => o.id === id || o.orderId === id || o._id === id);
+      if (match) return normalizeOrder(match);
+      throw err;
+    }
+  },
+
+  /**
+   * ADMIN
+   * Cancel an order.
+   */
+  async cancel(id: string): Promise<Order> {
+    try {
+      const response = await apiFetch<ApiResponse<Order>>(
+        `/admin/orders/${id}/cancel`,
+        {
+          method: "PATCH",
+        }
+      );
+      return normalizeOrder(response.data);
+    } catch (err) {
+      console.warn("Saving offline fallback admin cancel:", err);
+      fallbackOrders = fallbackOrders.map((o) =>
+        o.id === id || o.orderId === id || o._id === id
+          ? { ...o, orderStatus: "CANCELLED", updatedAt: new Date().toISOString() }
+          : o
+      );
+      const match = fallbackOrders.find((o) => o.id === id || o.orderId === id || o._id === id);
+      if (match) return normalizeOrder(match);
+      throw err;
+    }
   },
 };

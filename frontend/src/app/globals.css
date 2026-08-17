@@ -469,3 +469,29 @@ img {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* Custom inputs styling */
+.input-kitchen {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--white);
+  color: var(--dark);
+  outline: none;
+  font-size: 0.95rem;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.input-kitchen:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(228, 87, 46, 0.15);
+}
+
+.input-kitchen:disabled {
+  background: var(--soft-gray);
+  color: var(--muted);
+  cursor: not-allowed;
+}

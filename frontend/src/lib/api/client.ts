@@ -1,6 +1,6 @@
 const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "http://localhost:4000/api"
+  "http://localhost:5000/api"
 ).replace(/\/$/, "");
 
 export type ApiEnvelope<T> = {
@@ -49,13 +49,22 @@ export async function apiFetch<T>(
   } = {}
 ): Promise<T> {
   const {
-    auth = false,
+    auth,
     ...request
   } = options;
 
-  const token = auth
-    ? getToken(auth)
-    : null;
+  let token: string | null = null;
+  if (auth === false) {
+    token = null;
+  } else if (auth) {
+    token = getToken(auth);
+  } else {
+    if (path.startsWith("/admin") || path.startsWith("/api/admin")) {
+      token = getToken("admin");
+    } else {
+      token = getToken("customer");
+    }
+  }
 
   const headers = new Headers(
     request.headers
