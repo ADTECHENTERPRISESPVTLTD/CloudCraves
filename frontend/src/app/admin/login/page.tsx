@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { authService } from "@/lib/services/auth.service";
 
 export default function AdminLogin() {
@@ -35,6 +34,21 @@ export default function AdminLogin() {
           : "Invalid admin credentials."
       );
     } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDemoAdminLogin() {
+    setLoading(true);
+    setError("");
+    setEmail("admin@cloudcraves.com");
+    setPassword("password123");
+    try {
+      await authService.adminLogin("admin@cloudcraves.com", "password123");
+      router.push("/admin");
+      router.refresh();
+    } catch (err) {
+      setError("Demo admin login failed.");
       setLoading(false);
     }
   }
@@ -95,6 +109,31 @@ export default function AdminLogin() {
             ? "Signing in..."
             : "Sign in"}
         </button>
+
+        {/* Demo Fast Login Buttons */}
+        <div className="mt-6 border-t border-[#eadfd2] pt-5">
+          <p className="text-xs text-center font-bold text-[#8c8177] mb-3">
+            FAST DEMO ACCESS
+          </p>
+          <div className="grid gap-2 grid-cols-2">
+            <button
+              type="button"
+              onClick={handleDemoAdminLogin}
+              disabled={loading}
+              className="btn-secondary text-xs min-h-[38px] py-1 bg-[#fffaf5] hover:bg-[#fff1e8]"
+            >
+              Demo Admin
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/login")}
+              disabled={loading}
+              className="btn-secondary text-xs min-h-[38px] py-1 bg-[#e4572e] text-white hover:bg-[#cf4823]"
+            >
+              Customer Login
+            </button>
+          </div>
+        </div>
       </form>
     </div>
   );

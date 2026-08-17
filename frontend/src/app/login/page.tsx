@@ -35,6 +35,21 @@ export default function LoginPage() {
     }
   }
 
+  async function handleDemoCustomerLogin() {
+    setLoading(true);
+    setError("");
+    setEmail("customer@cloudcraves.com");
+    setPassword("password123");
+    try {
+      await authService.login("customer@cloudcraves.com", "password123");
+      router.push("/");
+      router.refresh();
+    } catch (err) {
+      setError("Demo customer login failed.");
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#fff1e8] p-4">
       <form
@@ -85,6 +100,31 @@ export default function LoginPage() {
         >
           {loading ? "Signing in..." : "Sign in"}
         </button>
+
+        {/* Demo Fast Login Buttons */}
+        <div className="mt-6 border-t border-[#eadfd2] pt-5">
+          <p className="text-xs text-center font-bold text-[#8c8177] mb-3">
+            FAST DEMO ACCESS
+          </p>
+          <div className="grid gap-2 grid-cols-2">
+            <button
+              type="button"
+              onClick={handleDemoCustomerLogin}
+              disabled={loading}
+              className="btn-secondary text-xs min-h-[38px] py-1 bg-[#fffaf5] hover:bg-[#fff1e8]"
+            >
+              Demo Customer
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/admin/login")}
+              disabled={loading}
+              className="btn-secondary text-xs min-h-[38px] py-1 bg-[#6b4f3a] text-white hover:bg-[#523c2c]"
+            >
+              Demo Admin
+            </button>
+          </div>
+        </div>
 
         <p className="mt-5 text-center text-sm">
           Don't have an account?{" "}

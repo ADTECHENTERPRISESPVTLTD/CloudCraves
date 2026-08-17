@@ -122,6 +122,13 @@ export default function CustomerShell({
             >
               <User size={20} />
             </Link>
+
+            <Link
+              href="/admin"
+              className="ml-2 rounded-xl bg-[#6b4f3a] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#523c2c]"
+            >
+              Admin Dashboard
+            </Link>
           </nav>
 
           {/* Mobile */}
@@ -231,6 +238,14 @@ export default function CustomerShell({
                 className="rounded-xl px-4 py-3 font-bold hover:bg-[#fff1e8]"
               >
                 Profile
+              </Link>
+
+              <Link
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="mt-2 rounded-xl bg-[#6b4f3a] px-4 py-3 font-bold text-white text-center hover:bg-[#523c2c]"
+              >
+                Admin Dashboard
               </Link>
             </nav>
           </div>
