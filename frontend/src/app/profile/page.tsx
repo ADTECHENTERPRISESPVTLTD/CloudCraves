@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import CustomerShell from "@/components/layout/CustomerShell";
 import { profileService } from "@/lib/services/profile.service";
 import { authService } from "@/lib/services/auth.service";
-import type { User } from "@/types/user";
+import { getToken } from "@/lib/api/client";
+import { User } from "lucide-react";
+import type { User as UserType } from "@/types/user";
 
 export default function ProfilePage() {
   const router = useRouter();
 
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserType | null>(null);
 
   const [editing, setEditing] = useState(false);
   const [showAddress, setShowAddress] = useState(false);
@@ -36,6 +38,12 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
+    // Do not call protected profile APIs when the customer is not logged in.
+    if (!getToken("customer")) {
+      setLoading(false);
+      return;
+    }
+
     profileService
       .get()
       .then(setUser)
@@ -80,12 +88,9 @@ export default function ProfilePage() {
     setError("");
 
     try {
-      const updated = await profileService.addAddress(
-        address
-      );
+      const updated = await profileService.addAddress(address);
 
       setUser(updated);
-
       setShowAddress(false);
 
       setAddress({
@@ -124,11 +129,49 @@ export default function ProfilePage() {
     );
   }
 
+  /*
+   * Guest state.
+   * A logged-out customer should see a login option instead of
+   * a fake/dummy profile or an API error.
+   */
   if (!user) {
     return (
       <CustomerShell>
         <div className="container-kitchen py-16">
-          Unable to load profile.
+          <div className="mx-auto max-w-md rounded-2xl bg-white p-8 text-center shadow-sm">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#fff1e8] text-[#e4572e]">
+              <User size={28} />
+            </div>
+
+            <h1 className="mt-5 text-2xl font-black text-[#6b4f3a]">
+              Sign in to view your profile
+            </h1>
+
+            <p className="mt-2 text-sm text-[#6d625a]">
+              Please sign in to access your profile, saved addresses and
+              account details.
+            </p>
+
+            {error && error !== "NOT_AUTHENTICATED" && (
+              <div className="mt-4 rounded-xl bg-[#f8e6e1] p-3 text-sm font-semibold text-[#b33b21]">
+                {error}
+              </div>
+            )}
+
+            <button
+              className="btn-primary mt-6 w-full"
+              onClick={() => router.push("/login?redirect=/profile")}
+            >
+              Sign in
+            </button>
+
+            <button
+              className="mt-3 w-full rounded-xl px-4 py-3 text-sm font-bold text-[#6b4f3a] hover:bg-[#fff1e8]"
+              onClick={() => router.push("/")}
+            >
+              Continue browsing
+            </button>
+          </div>
         </div>
       </CustomerShell>
     );
@@ -171,9 +214,7 @@ export default function ProfilePage() {
 
               <button
                 className="btn-secondary py-2"
-                onClick={() =>
-                  setEditing(!editing)
-                }
+                onClick={() => setEditing(!editing)}
               >
                 {editing ? "Cancel" : "Edit"}
               </button>
@@ -273,9 +314,7 @@ export default function ProfilePage() {
 
             <button
               className="btn-secondary mt-4"
-              onClick={() =>
-                setShowAddress(!showAddress)
-              }
+              onClick={() => setShowAddress(!showAddress)}
             >
               + Add address
             </button>
@@ -427,9 +466,7 @@ export default function ProfilePage() {
                   disabled={saving}
                   className="btn-primary w-full disabled:opacity-60"
                 >
-                  {saving
-                    ? "Saving..."
-                    : "Save address"}
+                  {saving ? "Saving..." : "Save address"}
                 </button>
               </form>
             )}

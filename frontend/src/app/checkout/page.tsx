@@ -56,7 +56,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!authService.isLoggedIn()) {
-      router.push("/login");
+      router.push("/login?redirect=/checkout");
       return;
     }
 

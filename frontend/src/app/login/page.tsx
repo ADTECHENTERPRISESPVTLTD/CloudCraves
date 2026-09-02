@@ -2,11 +2,16 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authService } from "@/lib/services/auth.service";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // If the user was redirected to login from another page,
+  // send them back there after successful login.
+  const redirect = searchParams.get("redirect") || "/";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +27,8 @@ export default function LoginPage() {
 
     try {
       await authService.login(email, password);
-      router.push("/");
+
+      router.push(redirect);
       router.refresh();
     } catch (err) {
       setError(
@@ -30,7 +36,6 @@ export default function LoginPage() {
           ? err.message
           : "Unable to login."
       );
-    } finally {
       setLoading(false);
     }
   }
@@ -38,11 +43,17 @@ export default function LoginPage() {
   async function handleDemoCustomerLogin() {
     setLoading(true);
     setError("");
+
     setEmail("customer@cloudcraves.com");
     setPassword("password123");
+
     try {
-      await authService.login("customer@cloudcraves.com", "password123");
-      router.push("/");
+      await authService.login(
+        "customer@cloudcraves.com",
+        "password123"
+      );
+
+      router.push(redirect);
       router.refresh();
     } catch (err) {
       setError("Demo customer login failed.");
@@ -106,6 +117,7 @@ export default function LoginPage() {
           <p className="text-xs text-center font-bold text-[#8c8177] mb-3">
             FAST DEMO ACCESS
           </p>
+
           <div className="grid gap-2 grid-cols-2">
             <button
               type="button"
@@ -115,6 +127,7 @@ export default function LoginPage() {
             >
               Demo Customer
             </button>
+
             <button
               type="button"
               onClick={() => router.push("/admin/login")}
